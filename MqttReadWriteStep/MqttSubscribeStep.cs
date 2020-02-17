@@ -2,26 +2,28 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
+using MQTTnet;
 using MQTTnet.Client;
 using SimioAPI;
 using SimioAPI.Extensions;
 
 namespace MqttSteps
 {
-    class MqttPublishExpressionStepDefinition : IStepDefinition
+    class MqttSubscribeStepDefinition : IStepDefinition
     {
         #region IStepDefinition Members
 
         /// <summary>
         /// Property returning the full name for this type of step. The name should contain no spaces.
         /// </summary>
-        public string Name => "MqttPublish";
+        public string Name => "MqttSubscribe";
 
         /// <summary>
         /// Property returning a short description of what the step does.
         /// </summary>
-        public string Description => "Publishes the payload to the given topic"; 
-        
+        public string Description => "Subscribe to a MQTT Topic";
+
 
         /// <summary>
         /// Property returning an icon to display for the step in the UI.
@@ -33,7 +35,7 @@ namespace MqttSteps
         /// </summary>
         public Guid UniqueID => MY_ID;
 
-        static readonly Guid MY_ID = new Guid("{a263d985-0a3d-45b2-a844-c40adb3d3c5c}");
+        static readonly Guid MY_ID = new Guid("{70167773-5C6E-41E3-9939-B3788125E13B}");  //dth 13Feb2020
 
         /// <summary>
         /// Property returning the number of exits out of the step. Can return either 1 or 2.
@@ -53,15 +55,15 @@ namespace MqttSteps
             pd.Description = "The MQTT topic. Often hierarchical e.g. Machine1/State/Speed";
             pd.Required = true;
 
-            pd = schema.AddExpressionProperty("MqttPayload", "0.0");
-            pd.DisplayName = "Payload";
-            pd.Description = "The payload expression to send with the Topic";
+            pd = schema.AddStringProperty("EventToFire", "0.0");
+            pd.DisplayName = "Event";
+            pd.Description = "The Simio Event to Fire when the topic is received.";
             pd.Required = true;
 
             // Example of how to add an element property definition to the step.
             pd = schema.AddElementProperty("MqttServer", MqttPublishElementDefinition.MY_ID);
             pd.DisplayName = "MQTT Server";
-            pd.Description = "The MQTT URL and port of the MQTT server(broker). For example, localhost:1883. Default port is 1883.";
+            pd.Description = "The MQTT URL and port of the MQTT server(broker). For example, localhost:8033. Default port is 1883.";
             pd.Required = true;
         }
 
@@ -71,38 +73,46 @@ namespace MqttSteps
         /// </summary>
         public IStep CreateStep(IPropertyReaders properties)
         {
-            return new MqttPublishExpressionStep(properties);
+            return new MqttSubscribeStep(properties);
         }
 
         #endregion
     }
 
     /// <summary>
-    /// The step instance
+    /// The step instance.
+    /// Retrive the run-time information, such as:
+    /// MQTT Element that holds server information
+    /// Properties including the MQTT Topic to subscribe to, and the Event to fire.
     /// </summary>
-    class MqttPublishExpressionStep : IStep
+    class MqttSubscribeStep : IStep
     {
         IPropertyReaders _props;
 
         IElementProperty prServerElement;
         IPropertyReader prTopic;
-        IPropertyReader prPayload;
-        
+        IPropertyReader prEvent;
+
+        IMqttClient SubscribeClient = null;
+
 
         /// <summary>
         /// Constructor. Create property readers
         /// Called when this Step is inserted into a Process.
         /// </summary>
         /// <param name="properties"></param>
-        public MqttPublishExpressionStep(IPropertyReaders properties)
+        public MqttSubscribeStep(IPropertyReaders properties)
         {
             _props = properties;
 
             prServerElement = (IElementProperty)_props.GetProperty("MqttServer");
-
-            prTopic = (IPropertyReader) _props.GetProperty("MqttTopic");
-            prPayload = (IPropertyReader)_props.GetProperty("MqttPayload");
             
+
+            prTopic = (IPropertyReader)_props.GetProperty("MqttTopic");
+            prEvent = (IPropertyReader)_props.GetProperty("MqttEvent");
+
+            SubscribeClient = new MqttFactory().CreateMqttClient();
+
         }
 
         #region IStep Members
@@ -112,24 +122,35 @@ namespace MqttSteps
         /// </summary>
         public ExitType Execute(IStepExecutionContext context)
         {
-            
+
             // Example of how to get the value of a step property.
-            var epReader = (IExpressionPropertyReader) prPayload;
-            var payload = epReader.GetExpressionValue((IExecutionContext)context).ToString();
+            string simioEvent = prEvent.GetStringValue(context);
             string topic = prTopic.GetStringValue(context);
 
             // Example of how to get an element reference specified in an element property of the step.
-            MqttPublishElement mqttElement = (MqttPublishElement) prServerElement.GetElement(context);
+            MqttPublishElement mqttElement = (MqttPublishElement)prServerElement.GetElement(context);
 
-            // The referenced element has a MQTT client
-            IMqttClient client = (IMqttClient) mqttElement.PublishClient;
-
-            if (client.IsConnected)
+            // The referenced element has events can can be fired,
+            // as well as 
+            if ( SubscribeClient == null )
             {
-                MqttHelpers.MqttPublish(client, topic, payload); // payload);
+                return ExitType.AlternateExit;
             }
-            else
-                context.ExecutionInformation.TraceInformation($"Execute. Step= .Client not connected. Topic={topic} Payload={payload}.");
+
+            //await MqttHelpers.ConnectClient(SubscribeClient, url, port);
+
+            //MqttHelpers.MqttSubscribeInitialize(SubscribeClient, HandleReceive);
+            ////var result = Task.Run(() => ConnectClient(publishClient, url, port)).Result;
+
+            //if (SubscribeClient.IsConnected)
+            //{
+            //    MqttHelpers.MqttSubscribeInitialize(SubScribeClient, Action<
+            //    MqttHelpers.MqttSubscribe(client, topic, cancellationToken);
+            //}
+            //else
+            //    context.ExecutionInformation.TraceInformation($"Execute. Step= .Client not connected. Topic={topic} Payload={payload}.");
+
+            // Show the topic and payload
 
             return ExitType.FirstExit;
         }

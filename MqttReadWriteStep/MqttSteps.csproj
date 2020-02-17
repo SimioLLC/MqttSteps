@@ -80,15 +80,39 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AlertBox.cs" />
     <Compile Include="AlertStep.cs" />
-    <Compile Include="MqttServerSingleton.cs" />
+    <Compile Include="FormAlert.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormAlert.Designer.cs">
+      <DependentUpon>FormAlert.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormMqttStatus.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormMqttStatus.Designer.cs">
+      <DependentUpon>FormMqttStatus.cs</DependentUpon>
+    </Compile>
+    <Compile Include="MqttHelpers.cs" />
+    <Compile Include="MqttConnectSingleton.cs" />
+    <Compile Include="MqttSubscriberElement.cs" />
+    <Compile Include="MqttSubscribeStep.cs" />
     <Compile Include="TestBuilder.cs" />
-    <Compile Include="MqttElement.cs" />
+    <Compile Include="MqttPublishElement.cs" />
     <Compile Include="MqttPublishStep.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="FormAlert.resx">
+      <DependentUpon>FormAlert.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormMqttStatus.resx">
+      <DependentUpon>FormMqttStatus.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\NETStandard.Library.2.0.0\build\netstandard2.0\NETStandard.Library.targets" Condition="Exists('..\packages\NETStandard.Library.2.0.0\build\netstandard2.0\NETStandard.Library.targets')" />

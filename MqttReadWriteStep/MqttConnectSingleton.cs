@@ -1,6 +1,7 @@
 ﻿using MQTTnet;
 using MQTTnet.Client;
 using MQTTnet.Client.Options;
+using SimioAPI;
 using SimioAPI.Extensions;
 using System;
 using System.Collections.Concurrent;
@@ -17,29 +18,33 @@ namespace MqttSteps
     /// It can be renamed and modified as necessary. It demonstrates Jon Skeet's singleton pattern
     /// by providing a thread-safe dictionary of objects with a string key.
     /// </summary>
-    public class MqttServerSingleton
+    public class MqttConnectSingleton
     {
-        private static MqttServerSingleton _instance;
+        private static MqttConnectSingleton _instance;
 
         public bool IsInitialized { get; set; }
         public string ServerUrl { get; set; }
         public int ServerPort { get; set; }
 
+        public IStepExecutionContext ExecutionContext { get; set; }
+
+        public IEvent MyEvent { get; set; }
+
         /// <summary>
         /// The publisher client can public information for a given topic.
         /// </summary>
-        IMqttClient publishClient { get; set; }
+        public IMqttClient PublishClient { get; set; }
 
         /// <summary>
         /// The subscriber client that receives information about topics.
         /// </summary>
-        IMqttClient receiveClient { get; set; }
+        public IMqttClient SubscribeClient { get; set; }
 
 
         /// <summary>
         /// The singleton constructor
         /// </summary>
-        private MqttServerSingleton()
+        private MqttConnectSingleton()
         {
             IsInitialized = false;
         }
@@ -47,13 +52,13 @@ namespace MqttSteps
         /// <summary>
         /// The singleton pattern implemented.
         /// </summary>
-        public static MqttServerSingleton Instance
+        public static MqttConnectSingleton Instance
         {
             get
             {
                 if (_instance == null)
                 {
-                    _instance = new MqttServerSingleton();
+                    _instance = new MqttConnectSingleton();
                 }
                 return _instance;
             }
@@ -65,27 +70,73 @@ namespace MqttSteps
         /// <param name="key"></param>
         /// <param name="info"></param>
         /// <returns></returns>
-        public bool Initialize (string url, int port)
+        public async Task<bool> Initialize (string url, int port, string topic)
         {
             if (IsInitialized)
                 return true;
 
             try
             {
-                publishClient = new MqttFactory().CreateMqttClient();
-                var result = Task.Run(() => ConnectClient(publishClient, url, port)).Result;
+                PublishClient = new MqttFactory().CreateMqttClient();
+                await MqttHelpers.ConnectClient(PublishClient, url, port);
+
+                SubscribeClient = new MqttFactory().CreateMqttClient();
+                await MqttHelpers.ConnectClient(SubscribeClient, url, port);
+
+                MqttHelpers.MqttSubscribeSetHandler(SubscribeClient, HandleReceive);
+                //var result = Task.Run(() => ConnectClient(publishClient, url, port)).Result;
+
+                CancellationToken cancelToken = new CancellationToken();
+                MqttHelpers.MqttSubscribe(SubscribeClient, topic, cancelToken);
 
                 IsInitialized = true;
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-
                 return false;
             }
         }
 
-        private async Task<bool> ConnectClient(IMqttClient client, string serverAddress, int port)
+        /// <summary>
+        /// The handling of the subscribed payload
+        /// </summary>
+        /// <param name="topic"></param>
+        /// <param name="payload"></param>
+        private void HandleReceive(string topic, string payload)
+        {
+            // Parse topic and look at the top level
+            string[] tokens = topic.Split('/');
+            if (tokens.Length == 0)
+                return;
+
+            try
+            {
+                switch (tokens[0])
+                {
+                    default:
+                        {
+                            StringBuilder sb = new StringBuilder("Message:");
+
+                            if (ExecutionContext != null)
+                            {
+                                ExecutionContext.Calendar.ScheduleCurrentEvent(null, (obj) =>
+                                {
+                                    MyEvent.Fire();
+                                });
+                            }
+                        }
+                        break;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                throw new ApplicationException($"Handler for received messages. Topic={topic}. Err={ex}");
+            }
+        }
+
+            private async Task<bool> ConnectClient(IMqttClient client, string serverAddress, int port)
         {
             try
             {

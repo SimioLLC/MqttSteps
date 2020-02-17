@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-
+using System.Threading.Tasks;
+using MQTTnet;
+using MQTTnet.Client;
 using SimioAPI;
 using SimioAPI.Extensions;
 
@@ -17,7 +19,7 @@ namespace MqttSteps
     /// <summary>
     /// The element defines the url of the MQTT Server (broker) and the port.
     /// </summary>
-    class MqttElementDefinition : IElementDefinition
+    class MqttPublishElementDefinition : IElementDefinition
     {
         #region IElementDefinition Members
 
@@ -26,7 +28,7 @@ namespace MqttSteps
         /// </summary>
         public string Name
         {
-            get { return "MqttServer"; }
+            get { return "MqttPublish"; }
         }
 
         /// <summary>
@@ -34,7 +36,7 @@ namespace MqttSteps
         /// </summary>
         public string Description
         {
-            get { return "Defines the connection to a MQTT Server (e.g. Mosquitto). Used by the MQTT Publish and RPC steps"; }
+            get { return "Defines a Publish connection to a MQTT Server (e.g. Mosquitto). Used by the MQTT Publish step"; }
         }
 
         /// <summary>
@@ -56,25 +58,36 @@ namespace MqttSteps
 
         /// <summary>
         /// Method called that defines the property, state, and event schema for the element.
-        /// This is called from Simio when you select "User Defined" on the ??? tab.
+        /// This is called from Simio when you select "User Defined" on the ??? tab.,
+        /// or when you have these elements already defined in the project.
         /// </summary>
         public void DefineSchema(IElementSchema schema)
         {
             IPropertyDefinition pd = schema.PropertyDefinitions.AddStringProperty("ServerUrl", string.Empty);
             pd.DisplayName = "MQTT Server URL";
-            pd.Description = "The address of the MQTT Server (e.g. Mostquitto server)";
+            pd.Description = "The address of the MQTT Server (e.g. localhost for a local server, such as Mosquitto)";
             pd.Required = true;
 
             pd = schema.PropertyDefinitions.AddStringProperty("ServerPort", "1883");
-            pd.DisplayName = "MQTT Port";
+            pd.DisplayName = "MQTT Server Port";
             pd.Description = "Internet port number used by MQTT Server. Default is 1883";
             pd.Required = true;
 
-            // Example of how to add an event definition to the element.
+            // An optional Simio Event can be added to this Mqtt Connection element
             IEventDefinition ed;
-            ed = schema.EventDefinitions.AddEvent("MqttCommunicationsEvent");
+            ed = schema.EventDefinitions.AddEvent("MqttEvent");
             ed.Description = "An event owned by this element";
-            
+
+            IStateDefinition sd = schema.StateDefinitions.AddStringState("Topic");
+            sd.DisplayName = "MQTT Topic";
+            sd.Description = "The received MQTT topic";
+            sd.AutoResetWhenStatisticsCleared = false;
+
+            sd = schema.StateDefinitions.AddStringState("Payload");
+            sd.DisplayName = "MQTT Payload";
+            sd.Description = "The received MQTT Payload";
+            sd.AutoResetWhenStatisticsCleared = false;
+
 
         }
 
@@ -85,7 +98,7 @@ namespace MqttSteps
         /// </summary>
         public IElement CreateElement(IElementData data)
         {
-            return new MqttElement(data);
+            return new MqttPublishElement(data);
         }
 
         #endregion
@@ -93,36 +106,60 @@ namespace MqttSteps
 
 
     /// <summary>
-    /// Defines what happens when the RUn starts
+    /// Defines what happens when the runtime starts
     /// </summary>
-    class MqttElement : IElement
+    class MqttPublishElement : IElement
     {
         IElementData _data;
 
+        //MqttConnectSingleton MqttConnector { get; set; }
+
+
+        public IMqttClient PublishClient { get; set; }
+
+        string ServerUrl { get; set; }
+        int ServerPort { get; set; }
+
         /// <summary>
-        /// Data includes run-time info, including context.
+        /// Constructor. The argument "data" includes run-time info, including ExecutionContext,
+        /// I.e. data has members of Events, that can be indexed with the name
+        /// and also Properties and ExecutionContext.
         /// </summary>
         /// <param name="data"></param>
-        public MqttElement(IElementData data)
+        public MqttPublishElement(IElementData data)
         {
             _data = data;
         }
 
         #region IElement Members
 
+
         /// <summary>
         /// Method called when the simulation run starts.
+        /// Called after the constructor.
         /// </summary>
         public void Initialize()
         {
-            string xx = "";
-            var events = _data.Events;
-            var mqttEvent = events["MqttCommunicationsEvent"];
+            var mqttEvent = _data.Events["MqttEvent"];
 
-            mqttEvent.Fire();
-            //?? put a test connection here.
+            IPropertyReader prUrl = _data.Properties.GetProperty("ServerUrl");
+            ServerUrl = prUrl.GetStringValue(_data.ExecutionContext);
 
-            // So, for example, you can initiate the event with: mqttEvent.Fire();
+            IPropertyReader prPort = _data.Properties.GetProperty("ServerPort");
+            ServerPort = int.Parse( prPort.GetStringValue(_data.ExecutionContext));
+
+            PublishClient = new MqttFactory().CreateMqttClient();
+            var t = Task.Run( () => MqttHelpers.ConnectClient(PublishClient, ServerUrl, ServerPort));
+            t.Wait();
+
+            var info = _data.ExecutionContext.ExecutionInformation;
+            string payload = $"Project:{info.ProjectFolder} {info.ProjectName} Model={info.ModelName} Scenario={info.ScenarioName} Replication={info.ReplicationNumber}";
+
+            MqttHelpers.MqttPublish(PublishClient, "simio/start", payload);
+
+            _data.ExecutionContext.ExecutionInformation.TraceInformation($"Connecting to Server: Url={ServerUrl} Port={ServerPort}");
+
+
         }
 
         /// <summary>
@@ -130,7 +167,11 @@ namespace MqttSteps
         /// </summary>
         public void Shutdown()
         {
+            var task = Task.Run(() => PublishClient.DisconnectAsync());
+            task.Wait();
+
             _data.ExecutionContext.ExecutionInformation.TraceInformation("Shutdown.");
+
         }
 
         #endregion

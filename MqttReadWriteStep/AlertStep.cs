@@ -12,6 +12,8 @@ namespace MqttSteps
     {
         #region IStepDefinition Members
 
+        public AlertBox Alert { get; set; }
+
         /// <summary>
         /// Property returning the full name for this type of step. The name should contain no spaces.
         /// </summary>
@@ -103,7 +105,7 @@ namespace MqttSteps
             // Example of how to get the value of a step property.
             string message = prMessage.GetStringValue(context);
 
-            DialogResult result = MessageBox.Show(message, "Simio Alert Step", MessageBoxButtons.OKCancel);
+            DialogResult result = AlertBox.ShowMessage(message);
 
             if (result == DialogResult.OK)
                 return ExitType.FirstExit;
