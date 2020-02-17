@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28307.902
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MqttSteps", "MqttReadWriteStep\MqttSteps.csproj", "{A263D985-0A3D-45B2-A844-C40ADB3D3C5C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MqttSteps", "Source\MqttSteps.csproj", "{A263D985-0A3D-45B2-A844-C40ADB3D3C5C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

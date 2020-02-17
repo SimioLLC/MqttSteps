@@ -95,7 +95,6 @@
       <DependentUpon>FormMqttStatus.cs</DependentUpon>
     </Compile>
     <Compile Include="MqttHelpers.cs" />
-    <Compile Include="MqttConnectSingleton.cs" />
     <Compile Include="MqttSubscriberElement.cs" />
     <Compile Include="MqttSubscribeStep.cs" />
     <Compile Include="TestBuilder.cs" />
