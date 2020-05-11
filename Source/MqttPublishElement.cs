@@ -150,6 +150,7 @@ namespace MqttSteps
 
             PublishClient = new MqttFactory().CreateMqttClient();
             var t = Task.Run( () => MqttHelpers.ConnectClient(PublishClient, ServerUrl, ServerPort));
+            //Todo: This will throw an error if there are no MQTT Servers.
             t.Wait();
 
             var info = _data.ExecutionContext.ExecutionInformation;

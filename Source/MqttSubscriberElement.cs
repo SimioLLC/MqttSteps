@@ -66,11 +66,11 @@ namespace MqttSteps
             pd.Description = "Port for the MQTT Server (broker)";
             pd.Required = true;
 
-            pd = schema.PropertyDefinitions.AddStringProperty("Topic", "Test/Topic");
+            // The MQTT Topic, which looks like this: foo/bar
+            pd = schema.PropertyDefinitions.AddStringProperty("Topic", "Simio/Actions");
             pd.DisplayName = "Mqtt Topic";
-            pd.Description = "The MQTT Topic we are subscribing to (e.g. 'Test/Topic'";
+            pd.Description = "The MQTT Topic we are subscribing to (e.g. 'Simio/Actions'";
             pd.Required = true;
-
             
             // Example of how to add a state definition to the element.
             IStateDefinition sd;
@@ -78,16 +78,10 @@ namespace MqttSteps
             sd.DisplayName = "Mqtt Payload";
             sd.Description = "Where the subscribed MQTT's topic's payload data is placed";
 
-            ////// A Simio Event can be added to this Mqtt Subscriber element
+            // Create a Simio Event that we will fire when an MQTT message is received
             IEventDefinition ed;
-            ed = schema.EventDefinitions.AddEvent("OnMessageReceived");
+            ed = schema.EventDefinitions.AddEvent("OnMqttMessageReceived");
             ed.Description = "Event that will be Fired upon receipt of MQTT Topic message";
-
-            // Can't figure out how to make this work
-            ////pd = schema.PropertyDefinitions.AddEventReferenceProperty("MqttEventRef");
-            ////pd.DisplayName = "Referenced Subscriber Event";
-            ////pd.Description = "Fired when Subscriber Topic is received. Needs to be a string";
-            ////pd.Required = false;
 
         }
 
@@ -103,6 +97,10 @@ namespace MqttSteps
         #endregion
     }
 
+    /// <summary>
+    /// This Element subscribes to a MQTT topic.
+    /// When the topic is received, it fires an event.
+    /// </summary>
     class MqttSubscriberElement : IElement
     {
         IElementData _data;
@@ -115,12 +113,12 @@ namespace MqttSteps
         int ServerPort { get; set; }
         string Topic { get; set; }
 
-        IEvent TopicEvent { get; set; }
-        string TopicEventName { get; set; }
+        List<IEvent> TopicEventList { get; set; }
+
 
         /// <summary>
         /// The constructor for the element.
-        /// Called at runtime whenever the element is referenced.
+        /// Called at runtime whenever the element is first referenced.
         /// </summary>
         /// <param name="data"></param>
         public MqttSubscriberElement(IElementData data)
@@ -135,13 +133,17 @@ namespace MqttSteps
             IPropertyReader prServerPort = _data.Properties.GetProperty("ServerPort");
             IPropertyReader prTopic = _data.Properties.GetProperty("Topic");
 
-            TopicEvent = _data.Events["OnMessageReceived"];
-            
+            // Get a reference to our event
+            TopicEventList = new List<IEvent>();
+            TopicEventList.Add(_data.Events["OnMqttMessageReceived"]);
+            //TopicEventList[1] = _data.Events["OnEvent2"];
+
             //var myEvent = prServerEventRef.GetStringValue(_data.ExecutionContext);
             ServerUrl = prServerUrl.GetStringValue(_data.ExecutionContext);
             string port = prServerPort.GetStringValue(_data.ExecutionContext);
             if (int.TryParse(port, out int portNumber))
                 ServerPort = portNumber;
+
             Topic = prTopic.GetStringValue(_data.ExecutionContext);
             
         }
@@ -155,7 +157,6 @@ namespace MqttSteps
         {
 
             // Subscribe to the MQTT server and topic
-
             SubscriberClient = new MqttFactory().CreateMqttClient();
             var task = Task.Run(() => MqttHelpers.ConnectClient(SubscriberClient, ServerUrl, ServerPort));
             task.Wait();
@@ -177,23 +178,42 @@ namespace MqttSteps
         /// <param name="payload"></param>
         private void HandlePayload(string topic, string payload)
         {
-            // Parse topic and look at the top level
-            string[] tokens = topic.Split('/');
-            if (tokens.Length == 0)
+            if ( string.IsNullOrEmpty(topic))
+            {
                 return;
+            }
+
+            if (string.IsNullOrEmpty(payload))
+            {
+                return;
+            }
+
+            // Parse topic and look at the top level
+            string[] tokens = payload.Trim().ToUpper().Split(':');
+            if (tokens.Length != 2)
+            {
+                return;
+            }
+
+            if ( !int.TryParse(tokens[1], out int eventNumber) || eventNumber < 0 || eventNumber > TopicEventList.Count()-1 )
+            {
+                return;
+            }
 
             try
             {
+                // Based on the payload we can take different actions.
+                // Here, we'll just always fire our defined Simio Event.
                 switch (tokens[0])
                 {
-                    default:
+                    case "EVENT":
                         {
                             StringBuilder sb = new StringBuilder("Message:");
 
                             // Use the calendar to fire the event since we may be on a different thread
                             _data.ExecutionContext.Calendar.ScheduleCurrentEvent(null, (obj) =>
                             {
-                                TopicEvent.Fire();
+                                TopicEventList[eventNumber].Fire();
                             });
 
                             sb.AppendLine($"Topic:{topic}");

@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyDescription("Mqtt for Publish, RPC, and Subscribe (Event)")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Simio LLC")]
-[assembly: AssemblyProduct("MqttReadWriteStep")]
+[assembly: AssemblyProduct("Mqttteps")]
 [assembly: AssemblyCopyright("Copyright ©  2020")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -32,5 +32,5 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("20.1.17.0")]
-[assembly: AssemblyFileVersion("20.1.17.0")]
+[assembly: AssemblyVersion("20.5.10.0")]
+[assembly: AssemblyFileVersion("20.5.10.0")]

@@ -50,12 +50,12 @@ namespace MqttSteps
 
             pd = schema.AddStringProperty("MqttTopic", "Test/Topic");
             pd.DisplayName = "The MQTT Topic";
-            pd.Description = "The MQTT topic. Often hierarchical e.g. Machine1/State/Speed";
+            pd.Description = "The MQTT topic. Often hierarchical e.g. PlantTopeka/Machine1/State/Speed";
             pd.Required = true;
 
             pd = schema.AddExpressionProperty("MqttPayload", "0.0");
             pd.DisplayName = "Payload";
-            pd.Description = "The payload expression to send with the Topic";
+            pd.Description = "The payload data to send with the Topic";
             pd.Required = true;
 
             // Example of how to add an element property definition to the step.
@@ -63,6 +63,7 @@ namespace MqttSteps
             pd.DisplayName = "MQTT Server";
             pd.Description = "The MQTT URL and port of the MQTT server(broker). For example, localhost:1883. Default port is 1883.";
             pd.Required = true;
+
         }
 
         /// <summary>
@@ -82,12 +83,10 @@ namespace MqttSteps
     /// </summary>
     class MqttPublishExpressionStep : IStep
     {
-        IPropertyReaders _props;
-
-        IElementProperty prServerElement;
-        IPropertyReader prTopic;
-        IPropertyReader prPayload;
-        
+        readonly IPropertyReaders _props;
+        readonly IElementProperty prServerElement;
+        readonly IPropertyReader prTopic;
+        readonly IPropertyReader prPayload;
 
         /// <summary>
         /// Constructor. Create property readers
@@ -109,31 +108,48 @@ namespace MqttSteps
 
         /// <summary>
         /// Method called when a process token executes the step.
+        /// Does an MQTT publish to the MqttServer with MqttTopic. 
+        /// The data that is published is MqttPayload
         /// </summary>
         public ExitType Execute(IStepExecutionContext context)
         {
-            
-            // Example of how to get the value of a step property.
-            var epReader = (IExpressionPropertyReader) prPayload;
-            var payload = epReader.GetExpressionValue((IExecutionContext)context).ToString();
-            string topic = prTopic.GetStringValue(context);
-
-            // Example of how to get an element reference specified in an element property of the step.
-            MqttPublishElement mqttElement = (MqttPublishElement) prServerElement.GetElement(context);
-
-            // The referenced element has a MQTT client
-            IMqttClient client = (IMqttClient) mqttElement.PublishClient;
-
-            if (client.IsConnected)
+            try
             {
-                MqttHelpers.MqttPublish(client, topic, payload); // payload);
-            }
-            else
-                context.ExecutionInformation.TraceInformation($"Execute. Step= .Client not connected. Topic={topic} Payload={payload}.");
+                // Example of how to get the value of a step property.
+                var epReader = (IExpressionPropertyReader)prPayload;
+                var payload = epReader.GetExpressionValue((IExecutionContext)context).ToString();
+                string topic = prTopic.GetStringValue(context);
 
-            return ExitType.FirstExit;
+                // Example of how to get an element reference specified in an element property of the step.
+                MqttPublishElement mqttElement = (MqttPublishElement)prServerElement.GetElement(context);
+
+                // The referenced element has a MQTT client
+                IMqttClient client = (IMqttClient)mqttElement.PublishClient;
+
+                if (client.IsConnected)
+                {
+                    MqttHelpers.MqttPublish(client, topic, payload); // payload);
+                    return ExitType.FirstExit;
+                }
+                else
+                {
+                    Logit(context, $"Execute. Step= .Client not connected. Topic={topic} Payload={payload}.");
+                    return ExitType.AlternateExit;
+                }
+
+
+            }
+            catch (Exception ex)
+            {
+                Logit(context, $"Execute Error={ex.Message}");
+                return ExitType.AlternateExit;
+            }
         }
 
+        private void Logit(IStepExecutionContext context, string msg)
+        {
+            context.ExecutionInformation.TraceInformation(msg);
+        }
         #endregion
     }
 }

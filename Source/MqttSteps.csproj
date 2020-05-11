@@ -34,11 +34,11 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="MQTTnet, Version=3.0.8.0, Culture=neutral, PublicKeyToken=b69712f52770c0a7, processorArchitecture=MSIL">
-      <HintPath>..\packages\MQTTnet.3.0.8\lib\net461\MQTTnet.dll</HintPath>
+    <Reference Include="MQTTnet, Version=3.0.9.0, Culture=neutral, PublicKeyToken=b69712f52770c0a7, processorArchitecture=MSIL">
+      <HintPath>..\packages\MQTTnet.3.0.9\lib\net461\MQTTnet.dll</HintPath>
     </Reference>
-    <Reference Include="MQTTnet.Extensions.Rpc, Version=3.0.8.0, Culture=neutral, PublicKeyToken=b69712f52770c0a7, processorArchitecture=MSIL">
-      <HintPath>..\packages\MQTTnet.Extensions.Rpc.3.0.8\lib\net461\MQTTnet.Extensions.Rpc.dll</HintPath>
+    <Reference Include="MQTTnet.Extensions.Rpc, Version=3.0.9.0, Culture=neutral, PublicKeyToken=b69712f52770c0a7, processorArchitecture=MSIL">
+      <HintPath>..\packages\MQTTnet.Extensions.Rpc.3.0.9\lib\net461\MQTTnet.Extensions.Rpc.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
