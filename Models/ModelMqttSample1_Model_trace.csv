@@ -1,4 +1,3 @@
 Time(Hours),EntityID,ObjectName,ProcessID,StepName,Action
-0.124587301587308,DefaultEntity.11,Model,2.Process1,[MqttPublish] MqttPublish1,Unable to get value of property 'MqttPublish.MqttPayload'.
-0.124587301587308,DefaultEntity.11,Model,2.Process1,[MqttPublish] MqttPublish1,Data type mismatch. Unable to convert value 'DefaultEntity.11' from type 'String' to type 'Number'.
+0.0763333333333367,--,--,--,--,MqttPublishConnector::Shutdown
 

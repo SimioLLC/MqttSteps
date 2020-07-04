@@ -22,18 +22,20 @@ namespace MqttSteps
         /// </summary>
         public string Description => "Publishes the payload to the given topic"; 
         
-
         /// <summary>
         /// Property returning an icon to display for the step in the UI.
         /// </summary>
-        public System.Drawing.Image Icon => null;
+        public System.Drawing.Image Icon => Properties.Resources.Mqtt;
 
         /// <summary>
         /// Property returning a unique static GUID for the step.
         /// </summary>
         public Guid UniqueID => MY_ID;
 
-        static readonly Guid MY_ID = new Guid("{a263d985-0a3d-45b2-a844-c40adb3d3c5c}");
+        /// <summary>
+        /// Changed 1Jul2020/dth
+        /// </summary>
+        static readonly Guid MY_ID = new Guid("{D82FFCE4-221C-4772-95AC-4CF3556B19BA}");
 
         /// <summary>
         /// Property returning the number of exits out of the step. Can return either 1 or 2.
@@ -48,7 +50,7 @@ namespace MqttSteps
             // Example of how to add a property definition to the step.
             IPropertyDefinition pd;
 
-            pd = schema.AddStringProperty("MqttTopic", "Test/Topic");
+            pd = schema.AddStringProperty("MqttTopic", "MqttSample/MyTopic");
             pd.DisplayName = "The MQTT Topic";
             pd.Description = "The MQTT topic. Often hierarchical e.g. PlantTopeka/Machine1/State/Speed";
             pd.Required = true;
@@ -121,7 +123,7 @@ namespace MqttSteps
                 string topic = prTopic.GetStringValue(context);
 
                 // Example of how to get an element reference specified in an element property of the step.
-                MqttPublishElement mqttElement = (MqttPublishElement)prServerElement.GetElement(context);
+                MqttPublishConnector mqttElement = (MqttPublishConnector)prServerElement.GetElement(context);
 
                 // The referenced element has a MQTT client
                 IMqttClient client = (IMqttClient)mqttElement.PublishClient;
@@ -129,6 +131,7 @@ namespace MqttSteps
                 if (client.IsConnected)
                 {
                     MqttHelpers.MqttPublish(client, topic, payload); // payload);
+                    Logit(context, $"MqttPublish: Topic={topic} Payload={payload}");
                     return ExitType.FirstExit;
                 }
                 else

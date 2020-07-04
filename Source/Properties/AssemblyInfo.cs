@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Simio LLC")]
 [assembly: AssemblyProduct("Mqttteps")]
-[assembly: AssemblyCopyright("Copyright ©  2020")]
+[assembly: AssemblyCopyright("Copyright © Simio LLC 2020")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -32,5 +32,5 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("20.5.10.0")]
-[assembly: AssemblyFileVersion("20.5.10.0")]
+[assembly: AssemblyVersion("20.7.2.0")]
+[assembly: AssemblyFileVersion("20.7.2.0")]

@@ -46,7 +46,11 @@ namespace MqttSteps
         {
             get { return MY_ID; }
         }
-        public static readonly Guid MY_ID = new Guid("{819fce4d-bd70-4895-9da5-459c67da7d63}");
+
+        /// <summary>
+        /// Changed 1Jul2020/dth
+        /// </summary>
+        public static readonly Guid MY_ID = new Guid("{8D75B9E4-E992-4B06-9B1F-630A77EAE31A}");
 
         /// <summary>
         /// Method called that defines the property, state, and event schema for the element.
@@ -67,9 +71,9 @@ namespace MqttSteps
             pd.Required = true;
 
             // The MQTT Topic, which looks like this: foo/bar
-            pd = schema.PropertyDefinitions.AddStringProperty("Topic", "Simio/Actions");
+            pd = schema.PropertyDefinitions.AddStringProperty("Topic", "MqttSample/Actions");
             pd.DisplayName = "Mqtt Topic";
-            pd.Description = "The MQTT Topic we are subscribing to (e.g. 'Simio/Actions'";
+            pd.Description = "The MQTT Topic we are subscribing to (e.g. 'MqttSample/Actions'";
             pd.Required = true;
             
             // Example of how to add a state definition to the element.
@@ -136,7 +140,6 @@ namespace MqttSteps
             // Get a reference to our event
             TopicEventList = new List<IEvent>();
             TopicEventList.Add(_data.Events["OnMqttMessageReceived"]);
-            //TopicEventList[1] = _data.Events["OnEvent2"];
 
             //var myEvent = prServerEventRef.GetStringValue(_data.ExecutionContext);
             ServerUrl = prServerUrl.GetStringValue(_data.ExecutionContext);
@@ -155,24 +158,33 @@ namespace MqttSteps
         /// </summary>
         public void Initialize()
         {
+            try
+            {
+                // Subscribe to the MQTT server and topic
+                SubscriberClient = new MqttFactory().CreateMqttClient();
+                var task = Task.Run(() => MqttHelpers.ConnectClient(SubscriberClient, ServerUrl, ServerPort));
+                task.Wait();
 
-            // Subscribe to the MQTT server and topic
-            SubscriberClient = new MqttFactory().CreateMqttClient();
-            var task = Task.Run(() => MqttHelpers.ConnectClient(SubscriberClient, ServerUrl, ServerPort));
-            task.Wait();
+                // Get ready to receive
+                MqttHelpers.MqttSubscribeSetHandler(SubscriberClient, HandlePayload);
 
-            // Get ready to receive
-            MqttHelpers.MqttSubscribeSetHandler(SubscriberClient, HandlePayload);
+                // Subscribe to the MQTT's Server/Broker for a topic
+                CancellationToken cancelToken = new CancellationToken();
+                MqttHelpers.MqttSubscribe(SubscriberClient, Topic, cancelToken);
 
-            // Subscribe to the MQTT's Server/Broker for a topic
-            CancellationToken cancelToken = new CancellationToken();
-            MqttHelpers.MqttSubscribe(SubscriberClient, Topic, cancelToken);
-            
+                LogIt($"Info: Subscribed to Client={SubscriberClient}. Server={ServerUrl}");
+
+            }
+            catch (Exception ex)
+            {
+                Alert($"Initialize. Subscribing to MQTT:{ex.Message}");
+            }
 
         }
 
         /// <summary>
-        /// The handling of the subscribed payload
+        /// The handling of the subscribed payload.
+        /// Convention of this payload is keyword, then a number, separated by colon.
         /// </summary>
         /// <param name="topic"></param>
         /// <param name="payload"></param>
@@ -180,15 +192,17 @@ namespace MqttSteps
         {
             if ( string.IsNullOrEmpty(topic))
             {
+                LogIt($"Received Null Topic.");
                 return;
             }
 
             if (string.IsNullOrEmpty(payload))
             {
+                LogIt($"Received empty payloaod.");
                 return;
             }
 
-            // Parse topic and look at the top level
+            // Parse the payload and look at the top level
             string[] tokens = payload.Trim().ToUpper().Split(':');
             if (tokens.Length != 2)
             {
@@ -208,16 +222,13 @@ namespace MqttSteps
                 {
                     case "EVENT":
                         {
-                            StringBuilder sb = new StringBuilder("Message:");
-
                             // Use the calendar to fire the event since we may be on a different thread
                             _data.ExecutionContext.Calendar.ScheduleCurrentEvent(null, (obj) =>
                             {
                                 TopicEventList[eventNumber].Fire();
                             });
 
-                            sb.AppendLine($"Topic:{topic}");
-                            sb.AppendLine($"Payload:{payload}");
+                            LogIt($"Info: MQTT Event Msg. Topic={topic} Payload={payload}");
                         }
                         break;
                 }
@@ -225,7 +236,7 @@ namespace MqttSteps
             }
             catch (Exception ex)
             {
-                throw new ApplicationException($"Handler for received messages. Topic={topic}. Err={ex}");
+                Alert($"Handler for received messages. Topic={topic}. Err={ex.Message}");
             }
 
         }
@@ -237,6 +248,15 @@ namespace MqttSteps
         {
             var task = Task.Run( () => SubscriberClient.DisconnectAsync());
             task.Wait();
+        }
+
+        private void LogIt(string msg)
+        {
+            _data.ExecutionContext.ExecutionInformation.TraceInformation($"MqttSubscribeElement::{msg}");
+        }
+        private void Alert(string msg)
+        {
+            _data.ExecutionContext.ExecutionInformation.ReportError($"MqttSubscribeElement::{msg}");
         }
 
         #endregion

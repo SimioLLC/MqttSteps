@@ -1,0 +1,94 @@
+
+This video describes the Simio User-Defined extensions for MQTT.
+
+MQTT stands for MQ Telementry Transport. It is a very popular network protocol to transport messages between devices.
+
+As Wikipedia explains. "MQTT is a lightweight publish-subscribe network protocol that transports messages between devices".
+ 
+It is designed for connections with remote locations where a "small code footprint" is required or the network bandwidth is limited."
+
+As such, it has become a very popular protocol for the IoT. It is supported by Amazon Web Services, Microsoft Azure, Node-RED, Open-source Home Automation software, and so forth.
+
+
+*Diagram*
+The topology is this:
+There is an MQTT Broker/Server that all clients connect to and then send messages to. Each message has a topic and a data payload.
+Any connected client can "publish" topics along with the payload.
+In a similiar manner, a client can subscribe to topics, meaning they wish to be notified each time a client publishes to that topic.
+
+The format of a topics is generally hierarchical; a hyphen-delimited string indicating hierarchy.
+For example a topic may be the weather in cities of the Earth, with a hierarchy of country name, state, and city name. 
+
+The data associated with the topic - the payload - is also a string of any format designated by the designer of the Topic.
+
+Let's look at a concrete example for getting the weather for one or more cities with the country/state/city hierarchy.
+The Topic then might be "USA/Pennsylvania/Pittsburgh"
+
+If you subscribed to this Topic, then each time Publisher makes a change you would receive a message perhaps like this:
+"Temperature=72F, Humidity=82"
+
+If you subscribed at a higher hierarchy, say "USA/Pennsylvania", you would perhaps receive a compositie message containing 
+the weather for all cities each time any had a change; it is up to the designer of the system.
+
+When MQTT is running on its most common network layer of TCP it uses the port of 1883 by default for unencrypted communications.
+
+
+*Simio Project*
+
+Let's take a look at the Sample Simio project that is used to test the MQTT Extensions:
+
+Using the Facility view, see that we have a simple source-server-sink project that demonstrates
+1. Subscribing to an MQTT topic and creating an Entity each time something publishes to that topic.
+2. Publishing MQTT topics each time that Entity enters or Exits our Server (named Server1).
+
+Let's demonstrate, and afterwards look at what is happening in more detail.
+
+A. We already have our MQTT broker running, which is a Mosquitto version downloaded from the internet.
+B. We' use the free app MQTT Explorer to communicate with our Simio project.
+
+So here we go:
+1. Here is the MQTT Explorer. Note that it has no host information save for its internal SYS$.
+2. Once we start the Simio project we can see that a special topic MqttSample/Start is published by our user-defined MQTT addin.
+
+But nothing else happens. Our project is waiting for a MQTT topic to be published, which we'll see later is named MqttSample1/SomeExternalTopic
+
+Using the MQTT Explorer, we'll publish the event
+... and now we can see an Entity has arrived.
+
+... the entity moves on to Server1
+... and now we can see that the topic MqttSample1/Input@Server1 has been published
+... and then that topic MqttSample1/Output@Server1 has published
+
+Any piece of software - anywhere on the planet - that is connected to the internet that has subscribed to these events has just been notified.
+
+Now let's look at the Project in detail:
+
+The Source demonstates reacting to a subscribed MQTT Topic. 
+It's Entity Arrival logic specifies that has an Entity arrives 
+when the Event that is attached to the MqttSubscriberElement1 is fired.
+
+As we will see, this element will subscribe to an MQTT topic so that each time the topic is published
+- which will be done external to Simio -
+an Entity will be created which will head to the Server1.
+
+Server1 will demonstrate MQTT publishing.
+
+Examining its Processes shows two Process Steps of the type "MQTT Publish":
+One triggered when an entity enters the Input@Server1 node,
+And the other when an entity enters the Output@Server1 node
+
+Selecting the step shows that it is publishing to a location defined by the MqttPublishClient Element... we'll come back to this.
+The Topic that is being published is MqttSample1/Input@Server1 and the Payload is an Expression.
+
+So each time an Entity enters this step, a MQTT topic is published with that payload.
+
+Returning to the MQTT Server, we examine the user-defined Element "MqttPublishConnector1" and see...
+
+that it defines the MQTT Broker/Server that our project communicates with:
+localhost indicates that it is on this computer, and
+the Port is set to 1883, which is the default MQTT Port.
+
+
+
+
+

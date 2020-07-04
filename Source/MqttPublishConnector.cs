@@ -28,7 +28,7 @@ namespace MqttSteps
         /// </summary>
         public string Name
         {
-            get { return "MqttPublish"; }
+            get { return "MqttPublishConnector"; }
         }
 
         /// <summary>
@@ -36,7 +36,7 @@ namespace MqttSteps
         /// </summary>
         public string Description
         {
-            get { return "Defines a Publish connection to a MQTT Server (e.g. Mosquitto). Used by the MQTT Publish step"; }
+            get { return "Defines a Publish connection to a MQTT Server (e.g. Mosquitto). Used by the MQTT Publish steps"; }
         }
 
         /// <summary>
@@ -54,7 +54,11 @@ namespace MqttSteps
         {
             get { return MY_ID; }
         }
-        public static readonly Guid MY_ID = new Guid("{487add29-b4d1-4453-8dd3-1ec2376d283d}");
+
+        /// <summary>
+        /// Changed 1Jul2020/dth
+        /// </summary>
+        public static readonly Guid MY_ID = new Guid("{26EEFAED-6ED4-4C6F-B273-7C84BC3EF6AF}");
 
         /// <summary>
         /// Method called that defines the property, state, and event schema for the element.
@@ -98,7 +102,7 @@ namespace MqttSteps
         /// </summary>
         public IElement CreateElement(IElementData data)
         {
-            return new MqttPublishElement(data);
+            return new MqttPublishConnector(data);
         }
 
         #endregion
@@ -108,12 +112,9 @@ namespace MqttSteps
     /// <summary>
     /// Defines what happens when the runtime starts
     /// </summary>
-    class MqttPublishElement : IElement
+    class MqttPublishConnector : IElement
     {
         IElementData _data;
-
-        //MqttConnectSingleton MqttConnector { get; set; }
-
 
         public IMqttClient PublishClient { get; set; }
 
@@ -126,7 +127,7 @@ namespace MqttSteps
         /// and also Properties and ExecutionContext.
         /// </summary>
         /// <param name="data"></param>
-        public MqttPublishElement(IElementData data)
+        public MqttPublishConnector(IElementData data)
         {
             _data = data;
         }
@@ -140,25 +141,34 @@ namespace MqttSteps
         /// </summary>
         public void Initialize()
         {
-            var mqttEvent = _data.Events["MqttEvent"];
+            try
+            {
+                var mqttEvent = _data.Events["MqttEvent"];
 
-            IPropertyReader prUrl = _data.Properties.GetProperty("ServerUrl");
-            ServerUrl = prUrl.GetStringValue(_data.ExecutionContext);
+                IPropertyReader prUrl = _data.Properties.GetProperty("ServerUrl");
+                ServerUrl = prUrl.GetStringValue(_data.ExecutionContext);
 
-            IPropertyReader prPort = _data.Properties.GetProperty("ServerPort");
-            ServerPort = int.Parse( prPort.GetStringValue(_data.ExecutionContext));
+                IPropertyReader prPort = _data.Properties.GetProperty("ServerPort");
+                ServerPort = int.Parse(prPort.GetStringValue(_data.ExecutionContext));
 
-            PublishClient = new MqttFactory().CreateMqttClient();
-            var t = Task.Run( () => MqttHelpers.ConnectClient(PublishClient, ServerUrl, ServerPort));
-            //Todo: This will throw an error if there are no MQTT Servers.
-            t.Wait();
+                PublishClient = new MqttFactory().CreateMqttClient();
+                var t = Task.Run(() => MqttHelpers.ConnectClient(PublishClient, ServerUrl, ServerPort));
+                //Todo: This will throw an error if there are no MQTT Servers.
+                t.Wait();
 
-            var info = _data.ExecutionContext.ExecutionInformation;
-            string payload = $"Project:{info.ProjectFolder} {info.ProjectName} Model={info.ModelName} Scenario={info.ScenarioName} Replication={info.ReplicationNumber}";
+                var info = _data.ExecutionContext.ExecutionInformation;
+                string payload = $"Project:{info.ProjectFolder} {info.ProjectName} Model={info.ModelName} Scenario={info.ScenarioName} Replication={info.ReplicationNumber}";
 
-            MqttHelpers.MqttPublish(PublishClient, "simio/start", payload);
+                // Publish a topic to indicate our presence
+                MqttHelpers.MqttPublish(PublishClient, "MqttSample/start", payload);
 
-            _data.ExecutionContext.ExecutionInformation.TraceInformation($"Connecting to Server: Url={ServerUrl} Port={ServerPort}");
+                LogIt($"Connecting to Server: Url={ServerUrl} Port={ServerPort}");
+
+            }
+            catch (Exception ex)
+            {
+                Alert($"Cannot Initalize. Err={ex.Message}");
+            }
 
 
         }
@@ -171,10 +181,18 @@ namespace MqttSteps
             var task = Task.Run(() => PublishClient.DisconnectAsync());
             task.Wait();
 
-            _data.ExecutionContext.ExecutionInformation.TraceInformation("Shutdown.");
+            LogIt("Shutdown");
 
         }
 
+        private void LogIt(string msg)
+        {
+            _data.ExecutionContext.ExecutionInformation.TraceInformation($"MqttPublishConnector::{msg}");
+        }
+        private void Alert(string msg)
+        {
+            _data.ExecutionContext.ExecutionInformation.ReportError($"MqttPublishConnector::{msg}");
+        }
         #endregion
     }
 }
