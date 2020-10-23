@@ -1,3 +1,8 @@
 Time(Hours),EntityID,ObjectName,ProcessID,StepName,Action
-0.0763333333333367,--,--,--,--,MqttPublishConnector::Shutdown
+0.0254900793650798,DefaultEntity.11,Model,2.Process1,[MqttPublish] MqttPublish2,Unable to get value of property 'MqttPublish.MqttPayload'.
+0.0254900793650798,DefaultEntity.11,Model,2.Process1,[MqttPublish] MqttPublish2,Invalid operation because types of operands must match. Both must be numeric or string.
+0.0282303976341166,DefaultEntity.11,Model,3.Process1,[MqttPublish] MqttPublish2,Unable to get value of property 'MqttPublish.MqttPayload'.
+0.0282303976341166,DefaultEntity.11,Model,3.Process1,[MqttPublish] MqttPublish2,Invalid operation because types of operands must match. Both must be numeric or string.
+0.0282303976341166,DefaultEntity.11,Model,2.Process2,[MqttPublish] MqttPublish1,Unable to get value of property 'MqttPublish.MqttPayload'.
+0.0282303976341166,DefaultEntity.11,Model,2.Process2,[MqttPublish] MqttPublish1,Invalid operation because types of operands must match. Both must be numeric or string.
 

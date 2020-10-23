@@ -53,6 +53,11 @@ namespace MqttSteps
         public static readonly Guid MY_ID = new Guid("{8D75B9E4-E992-4B06-9B1F-630A77EAE31A}");
 
         /// <summary>
+        /// A list of event definitions
+        /// </summary>
+        public List<IEventDefinition> EventDefList { get; set; } = new List<IEventDefinition>();
+
+        /// <summary>
         /// Method called that defines the property, state, and event schema for the element.
         /// </summary>
         public void DefineSchema(IElementSchema schema)
@@ -60,32 +65,42 @@ namespace MqttSteps
             // Example of how to add a property definition to the element.
             IPropertyDefinition pd;
 
-            pd = schema.PropertyDefinitions.AddStringProperty("ServerUrl", "localhost");
-            pd.DisplayName = "Server Url";
-            pd.Description = "Url for the MQTT Server (broker)";
-            pd.Required = true;
-
-            pd = schema.PropertyDefinitions.AddStringProperty("ServerPort", "1883");
-            pd.DisplayName = "Server Port";
-            pd.Description = "Port for the MQTT Server (broker)";
+            // Add the connector element property definition to this Element
+            pd = schema.PropertyDefinitions.AddElementProperty("MqttServer", MqttSubscribeConnectorDefinition.MY_ID);
+            pd.DisplayName = "MQTT Server";
+            pd.Description = "The MQTT address of the server(broker). For example, localhost:1883. Default port is 1883.";
             pd.Required = true;
 
             // The MQTT Topic, which looks like this: foo/bar
-            pd = schema.PropertyDefinitions.AddStringProperty("Topic", "MqttSample/Actions");
-            pd.DisplayName = "Mqtt Topic";
-            pd.Description = "The MQTT Topic we are subscribing to (e.g. 'MqttSample/Actions'";
+            pd = schema.PropertyDefinitions.AddStringProperty("Topic", "MqttSample1/MySubscribedActions");
+            pd.DisplayName = "MQTT Topic";
+            pd.Description = "The MQTT Topic we are subscribing to (e.g. 'MqttSample1/MySubscribedActions'";
             pd.Required = true;
-            
+
+            pd = schema.PropertyDefinitions.AddStringProperty("StatusTopic", "MqttSample1/SubscribeStatus");
+            pd.DisplayName = "MQTT Subscribe Status Topic";
+            pd.Description = "This is the topic published to for status such as Start";
+            pd.Required = true;
+
             // Example of how to add a state definition to the element.
             IStateDefinition sd;
             sd = schema.StateDefinitions.AddStringState("ReceivedPayload");
-            sd.DisplayName = "Mqtt Payload";
+            sd.DisplayName = "MQTT Payload";
             sd.Description = "Where the subscribed MQTT's topic's payload data is placed";
 
-            // Create a Simio Event that we will fire when an MQTT message is received
+            // Create Simio Events that we will fire when an MQTT message is received. There are up to three of these.
             IEventDefinition ed;
-            ed = schema.EventDefinitions.AddEvent("OnMqttMessageReceived");
-            ed.Description = "Event that will be Fired upon receipt of MQTT Topic message";
+            ed = schema.EventDefinitions.AddEvent("OnMqttReceivedEvent1");
+            ed.Description = "Event1 that will be Fired upon receipt of MQTT Topic message";
+            EventDefList.Add(ed);
+
+            ed = schema.EventDefinitions.AddEvent("OnMqttReceivedEvent2");
+            ed.Description = "Event2 that will be Fired upon receipt of MQTT Topic message";
+            EventDefList.Add(ed);
+
+            ed = schema.EventDefinitions.AddEvent("OnMqttReceivedEvent3");
+            ed.Description = "Event3 that will be Fired upon receipt of MQTT Topic message";
+            EventDefList.Add(ed);
 
         }
 
@@ -111,18 +126,30 @@ namespace MqttSteps
 
         IMqttClient SubscriberClient { get; set; }
 
+        public IMqttClient PublishStatusClient { get; set; }
+
+        private readonly IElementProperty prServerElement;
+
+
         IPropertyReaders _props;
 
-        string ServerUrl { get; set; }
-        int ServerPort { get; set; }
-        string Topic { get; set; }
+        ////string ServerUrl { get; set; }
+        ////int ServerPort { get; set; }
 
+        MqttSubscribeConnector MqttConnector { get; set; }
+
+        string SubscribeTopic { get; set; }
+        string StatusTopic { get; set; }
+
+        /// <summary>
+        /// A list of events that are created from the EventDefinition List.
+        /// </summary>
         List<IEvent> TopicEventList { get; set; }
 
 
         /// <summary>
         /// The constructor for the element.
-        /// Called at runtime whenever the element is first referenced.
+        /// Called at runtime when the element is first referenced.
         /// </summary>
         /// <param name="data"></param>
         public MqttSubscriberElement(IElementData data)
@@ -131,23 +158,42 @@ namespace MqttSteps
 
             _props = _data.Properties;
 
-            //var prConnector = _data.Properties.GetProperty("MqttConnect");
+            // The IElementData contains a reference to the execution context
+            var context = _data.ExecutionContext;
+
+            prServerElement = (IElementProperty)_props.GetProperty("MqttServer");
+            MqttConnector = (MqttSubscribeConnector)prServerElement.GetElement(context);
+
             // Get the Property Readers
-            IPropertyReader prServerUrl = _data.Properties.GetProperty("ServerUrl");
-            IPropertyReader prServerPort = _data.Properties.GetProperty("ServerPort");
+            ////IPropertyReader prServerUrl = _data.Properties.GetProperty("ServerUrl");
+            ////IPropertyReader prServerPort = _data.Properties.GetProperty("ServerPort");
             IPropertyReader prTopic = _data.Properties.GetProperty("Topic");
+            IPropertyReader prStatusTopic = _data.Properties.GetProperty("StatusTopic");
 
-            // Get a reference to our event
+            //prServerElement = (IElementProperty)_props.GetProperty("MqttServer");
+
+            // An a Simio Event for each of our Simio Definitions
             TopicEventList = new List<IEvent>();
-            TopicEventList.Add(_data.Events["OnMqttMessageReceived"]);
 
-            //var myEvent = prServerEventRef.GetStringValue(_data.ExecutionContext);
-            ServerUrl = prServerUrl.GetStringValue(_data.ExecutionContext);
-            string port = prServerPort.GetStringValue(_data.ExecutionContext);
-            if (int.TryParse(port, out int portNumber))
-                ServerPort = portNumber;
+            foreach ( var eventDef in _data.Events )
+            {
+                TopicEventList.Add(eventDef);
+            }
 
-            Topic = prTopic.GetStringValue(_data.ExecutionContext);
+            //TopicEventList.Add(_data.Events["OnMqttReceivedEvent1"]);
+            //TopicEventList.Add(_data.Events["OnMqttReceivedEvent2"]);
+            //TopicEventList.Add(_data.Events["OnMqttReceivedEvent3"]);
+
+            //prServerElement = (IElementProperty)_props.GetProperty("MqttServer");
+
+            // Get the MQTT connector which holds the MQTT client information
+            //MqttConnector = (MqttSubscribeConnector)prServerElement.GetElement(context);
+
+            StatusTopic = prStatusTopic.GetStringValue(_data.ExecutionContext);
+
+            LogIt($"SubscriberElement Start: Url={MqttConnector.ServerUrl} Port={MqttConnector.ServerPort} StatusTopic={StatusTopic}");
+
+            SubscribeTopic = prTopic.GetStringValue(_data.ExecutionContext);
             
         }
 
@@ -160,9 +206,12 @@ namespace MqttSteps
         {
             try
             {
+                if (MqttConnector.ServerUrl == null)
+                    return;
+
                 // Subscribe to the MQTT server and topic
                 SubscriberClient = new MqttFactory().CreateMqttClient();
-                var task = Task.Run(() => MqttHelpers.ConnectClient(SubscriberClient, ServerUrl, ServerPort));
+                var task = Task.Run(() => MqttHelpers.ConnectClient(SubscriberClient, MqttConnector.ServerUrl, MqttConnector.ServerPort));
                 task.Wait();
 
                 // Get ready to receive
@@ -170,9 +219,20 @@ namespace MqttSteps
 
                 // Subscribe to the MQTT's Server/Broker for a topic
                 CancellationToken cancelToken = new CancellationToken();
-                MqttHelpers.MqttSubscribe(SubscriberClient, Topic, cancelToken);
+                MqttHelpers.MqttSubscribe(SubscriberClient, SubscribeTopic, cancelToken);
 
-                LogIt($"Info: Subscribed to Client={SubscriberClient}. Server={ServerUrl}");
+                PublishStatusClient = new MqttFactory().CreateMqttClient();
+                var t = Task.Run(() => MqttHelpers.ConnectClient(PublishStatusClient, MqttConnector.ServerUrl, MqttConnector.ServerPort));
+                //Todo: This will throw an error if there are no MQTT Servers.
+                t.Wait();
+
+                // Publish a topic to indicate our presence
+                var info = _data.ExecutionContext.ExecutionInformation;
+                string payload = $"Project:{info.ProjectFolder} {info.ProjectName} Model={info.ModelName} Scenario={info.ScenarioName} Replication={info.ReplicationNumber}";
+
+                MqttHelpers.MqttPublish(PublishStatusClient, StatusTopic, payload);
+
+                LogIt($"Info: Server={MqttConnector.ServerUrl} Port={MqttConnector.ServerPort} SubscribeTopic={SubscribeTopic} StatusTopic={StatusTopic}");
 
             }
             catch (Exception ex)
@@ -184,7 +244,8 @@ namespace MqttSteps
 
         /// <summary>
         /// The handling of the subscribed payload.
-        /// Convention of this payload is keyword, then a number, separated by colon.
+        /// By convention, this payload is an action, followed by a colon, and then any other info needed.
+        /// For example, A new order is created with ORDER:ADD:order-name
         /// </summary>
         /// <param name="topic"></param>
         /// <param name="payload"></param>
@@ -220,15 +281,29 @@ namespace MqttSteps
                 // Here, we'll just always fire our defined Simio Event.
                 switch (tokens[0])
                 {
-                    case "EVENT":
+                    case "SIMIOEVENT":
                         {
+                            string simioEventName = tokens[1].Trim().ToLower();
+
                             // Use the calendar to fire the event since we may be on a different thread
                             _data.ExecutionContext.Calendar.ScheduleCurrentEvent(null, (obj) =>
                             {
-                                TopicEventList[eventNumber].Fire();
+                                var simEvent = TopicEventList.SingleOrDefault(rr => rr.Name.ToLower() == simioEventName);
+                                if (simEvent != null)
+                                {
+                                    simEvent.Fire();
+                                }
+                                else
+                                    LogIt($"No such SimioEvent={simioEventName}");
                             });
 
-                            LogIt($"Info: MQTT Event Msg. Topic={topic} Payload={payload}");
+                            LogIt($"Info: MQTT Event Msg. Topic={topic} SimioEvent={simioEventName} Payload={payload}");
+                        }
+                        break;
+
+                    default:
+                        {
+                            LogIt($"Warning: Unknown MQTT Payload Action={tokens[0]}");
                         }
                         break;
                 }
@@ -246,6 +321,9 @@ namespace MqttSteps
         /// </summary>
         public void Shutdown()
         {
+            if (SubscriberClient == null)
+                return;
+
             var task = Task.Run( () => SubscriberClient.DisconnectAsync());
             task.Wait();
         }

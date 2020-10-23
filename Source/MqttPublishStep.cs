@@ -8,6 +8,9 @@ using SimioAPI.Extensions;
 
 namespace MqttSteps
 {
+    //=========================================================================
+    // Step Definition
+
     class MqttPublishExpressionStepDefinition : IStepDefinition
     {
         #region IStepDefinition Members
@@ -52,7 +55,7 @@ namespace MqttSteps
 
             pd = schema.AddStringProperty("MqttTopic", "MqttSample/MyTopic");
             pd.DisplayName = "The MQTT Topic";
-            pd.Description = "The MQTT topic. Often hierarchical e.g. PlantTopeka/Machine1/State/Speed";
+            pd.Description = "The MQTT topic. Often hierarchical using slashes. Example: PlantTopeka/Machine1/State/Speed";
             pd.Required = true;
 
             pd = schema.AddExpressionProperty("MqttPayload", "0.0");
@@ -60,8 +63,8 @@ namespace MqttSteps
             pd.Description = "The payload data to send with the Topic";
             pd.Required = true;
 
-            // Example of how to add an element property definition to the step.
-            pd = schema.AddElementProperty("MqttServer", MqttPublishElementDefinition.MY_ID);
+            // Add the connector element property definition to the step.
+            pd = schema.AddElementProperty("MqttServer", MqttPublishConnectorDefinition.MY_ID);
             pd.DisplayName = "MQTT Server";
             pd.Description = "The MQTT URL and port of the MQTT server(broker). For example, localhost:1883. Default port is 1883.";
             pd.Required = true;
@@ -80,6 +83,9 @@ namespace MqttSteps
         #endregion
     }
 
+    //=========================================================================
+    // Step Instance
+
     /// <summary>
     /// The step instance
     /// </summary>
@@ -93,6 +99,7 @@ namespace MqttSteps
         /// <summary>
         /// Constructor. Create property readers
         /// Called when this Step is inserted into a Process.
+        /// Create all of the needed Property Readers.
         /// </summary>
         /// <param name="properties"></param>
         public MqttPublishExpressionStep(IPropertyReaders properties)
@@ -115,28 +122,30 @@ namespace MqttSteps
         /// </summary>
         public ExitType Execute(IStepExecutionContext context)
         {
+            string topic = "";
+
             try
             {
                 // Example of how to get the value of a step property.
-                var epReader = (IExpressionPropertyReader)prPayload;
+                var epReader = (IExpressionPropertyReader) prPayload;
                 var payload = epReader.GetExpressionValue((IExecutionContext)context).ToString();
-                string topic = prTopic.GetStringValue(context);
+                topic = prTopic.GetStringValue(context);
 
-                // Example of how to get an element reference specified in an element property of the step.
-                MqttPublishConnector mqttElement = (MqttPublishConnector)prServerElement.GetElement(context);
+                // Get the MQTT connector which holds the MQTT client information
+                MqttPublishConnector mqttConnector = (MqttPublishConnector)prServerElement.GetElement(context);
 
                 // The referenced element has a MQTT client
-                IMqttClient client = (IMqttClient)mqttElement.PublishClient;
+                IMqttClient client = (IMqttClient) mqttConnector.PublishClient;
 
                 if (client.IsConnected)
                 {
                     MqttHelpers.MqttPublish(client, topic, payload); // payload);
-                    Logit(context, $"MqttPublish: Topic={topic} Payload={payload}");
+                    Logit(context, $"Info: Topic={topic} Payload={payload}");
                     return ExitType.FirstExit;
                 }
                 else
                 {
-                    Logit(context, $"Execute. Step= .Client not connected. Topic={topic} Payload={payload}.");
+                    Logit(context, $"Execute. Step Topic={topic} .Client not connected. Topic={topic} Payload={payload}.");
                     return ExitType.AlternateExit;
                 }
 
@@ -144,14 +153,14 @@ namespace MqttSteps
             }
             catch (Exception ex)
             {
-                Logit(context, $"Execute Error={ex.Message}");
+                Logit(context, $"Execute Topic={topic} Error={ex.Message}");
                 return ExitType.AlternateExit;
             }
         }
 
         private void Logit(IStepExecutionContext context, string msg)
         {
-            context.ExecutionInformation.TraceInformation(msg);
+            context.ExecutionInformation.TraceInformation($"MqttPublishStep: {msg}");
         }
         #endregion
     }

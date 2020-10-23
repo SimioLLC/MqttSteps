@@ -95,6 +95,7 @@
       <DependentUpon>FormMqttStatus.cs</DependentUpon>
     </Compile>
     <Compile Include="MqttHelpers.cs" />
+    <Compile Include="MqttSubscribeConnector.cs" />
     <Compile Include="MqttSubscriberElement.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>

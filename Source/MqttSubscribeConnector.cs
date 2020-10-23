@@ -16,12 +16,12 @@ namespace MqttSteps
 {
 
     //===================================================================================
-    // The definition of a Publish connector
+    // The definition of a Subscribe connector
 
     /// <summary>
     /// The element defines the url of the MQTT Server (broker) and the port.
     /// </summary>
-    internal class MqttPublishConnectorDefinition : IElementDefinition
+    internal class MqttSubscribeConnectorDefinition : IElementDefinition
     {
         #region IElementDefinition Members
 
@@ -30,7 +30,7 @@ namespace MqttSteps
         /// </summary>
         public string Name
         {
-            get { return "MqttPublishConnector"; }
+            get { return "MqttSubscribeConnector"; }
         }
 
         /// <summary>
@@ -38,7 +38,7 @@ namespace MqttSteps
         /// </summary>
         public string Description
         {
-            get { return "Defines a connection to a MQTT Server/Broker (e.g. Mosquitto). Used by the MQTT Publish steps"; }
+            get { return "Defines a connection to a MQTT Server/Broker (e.g. Mosquitto). Used by the MQTT Subscribe elements"; }
         }
 
         /// <summary>
@@ -58,9 +58,9 @@ namespace MqttSteps
         }
 
         /// <summary>
-        /// Changed 1Jul2020/dth
+        /// Changed 22Oct2020/dth
         /// </summary>
-        public static readonly Guid MY_ID = new Guid("{26EEFAED-6ED4-4C6F-B273-7C84BC3EF6AF}");
+        public static readonly Guid MY_ID = new Guid("{EA80B3EB-5810-4458-9E55-60F906748403}");
 
         /// <summary>
         /// Method called that defines the property, state, and event schema for the element.
@@ -84,21 +84,6 @@ namespace MqttSteps
             pd.Description = "This is the topic published to for Status, such as Start";
             pd.Required = true;
 
-            // An optional Simio Event can be added to this Mqtt Connection element
-            IEventDefinition ed;
-            ed = schema.EventDefinitions.AddEvent("MqttEvent");
-            ed.Description = "An event owned by this element";
-
-            IStateDefinition sd = schema.StateDefinitions.AddStringState("Topic");
-            sd.DisplayName = "MQTT Topic";
-            sd.Description = "The received MQTT topic";
-            sd.AutoResetWhenStatisticsCleared = false;
-
-            sd = schema.StateDefinitions.AddStringState("Payload");
-            sd.DisplayName = "MQTT Payload";
-            sd.Description = "The received MQTT Payload";
-            sd.AutoResetWhenStatisticsCleared = false;
-
 
         }
 
@@ -109,7 +94,7 @@ namespace MqttSteps
         /// </summary>
         public IElement CreateElement(IElementData data)
         {
-            return new MqttPublishConnector(data);
+            return new MqttSubscribeConnector(data);
         }
 
         #endregion
@@ -117,16 +102,15 @@ namespace MqttSteps
 
     //===================================================================================
     // An instance of a public connector.
-    // In the constructor an MQTT connection is made.
+    // In the constructor an MQTT connection is tried.
 
     /// <summary>
     /// Defines what happens when the runtime starts
     /// </summary>
-    class MqttPublishConnector : IElement
+    class MqttSubscribeConnector : IElement
     {
         readonly IElementData _data;
 
-        public IMqttClient PublishClient { get; set; }
 
         /// <summary>
         /// The referenced server/broker
@@ -146,9 +130,10 @@ namespace MqttSteps
         /// and also Properties and ExecutionContext.
         /// </summary>
         /// <param name="data"></param>
-        public MqttPublishConnector(IElementData data)
+        public MqttSubscribeConnector(IElementData data)
         {
             _data = data;
+
             try
             {
                 IPropertyReader prUrl = _data.Properties.GetProperty("ServerUrl");
@@ -163,8 +148,11 @@ namespace MqttSteps
             }
             catch (Exception ex)
             {
+
                 LogIt($"Err={ex.Message}");
             }
+
+
         }
 
         #region IElement Members
@@ -180,23 +168,25 @@ namespace MqttSteps
             {
                 ////var mqttEvent = _data.Events["MqttEvent"];
 
-                PublishClient = new MqttFactory().CreateMqttClient();
-                var t = Task.Run(() => MqttHelpers.ConnectClient(PublishClient, ServerUrl, ServerPort));
-                //Todo: This will throw an error if there are no MQTT Servers.
-                t.Wait();
+                using (IMqttClient subscribeClient = new MqttFactory().CreateMqttClient())
+                {
+                    var t = Task.Run(() => MqttHelpers.ConnectClient(subscribeClient, ServerUrl, ServerPort));
+                    //Todo: This will throw an error if there are no MQTT Servers.
+                    t.Wait();
 
-                var info = _data.ExecutionContext.ExecutionInformation;
-                string payload = $"Project:{info.ProjectFolder} {info.ProjectName} Model={info.ModelName} Scenario={info.ScenarioName} Replication={info.ReplicationNumber}";
+                    var info = _data.ExecutionContext.ExecutionInformation;
+                    string payload = $"Project:{info.ProjectFolder} {info.ProjectName} Model={info.ModelName} Scenario={info.ScenarioName} Replication={info.ReplicationNumber}";
 
-                // Publish a topic to indicate our presence
-                MqttHelpers.MqttPublish(PublishClient, StatusTopic, payload);
+                    // Subscribe a topic to indicate our presence
+                    MqttHelpers.MqttPublish(subscribeClient, StatusTopic, payload);
+                }
 
                 LogIt($"Info: Connecting to Server: Url={ServerUrl} Port={ServerPort} StatusTopic={StatusTopic}");
 
             }
             catch (Exception ex)
             {
-                Alert($"Cannot Initalize. Err={ex.Message}");
+                Alert($"MQTT Subscribe. Cannot Initalize. Err={ex.Message}");
             }
         }
 
@@ -205,21 +195,18 @@ namespace MqttSteps
         /// </summary>
         public void Shutdown()
         {
-            var task = Task.Run(() => PublishClient.DisconnectAsync());
-            task.Wait();
-
             LogIt("Shutdown");
-
         }
 
         private void LogIt(string msg)
         {
-            _data.ExecutionContext.ExecutionInformation.TraceInformation($"MqttPublishConnector::{msg}");
+            _data.ExecutionContext.ExecutionInformation.TraceInformation($"MqttSubscribeConnector::{msg}");
         }
         private void Alert(string msg)
         {
-            _data.ExecutionContext.ExecutionInformation.ReportError($"MqttPublishConnector::{msg}");
+            _data.ExecutionContext.ExecutionInformation.ReportError($"MqttSubscribeConnector::{msg}");
         }
         #endregion
+
     }
 }
