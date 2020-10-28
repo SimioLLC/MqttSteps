@@ -111,18 +111,13 @@ namespace MqttSteps
     {
         readonly IElementData _data;
 
-
         /// <summary>
-        /// The referenced server/broker
+        /// The referenced server/broker.
         /// </summary>
         public string ServerUrl { get; set; }
 
         public int ServerPort { get; set; }
 
-        /// <summary>
-        /// A status topic that is published when the connector is created.
-        /// </summary>
-        string StatusTopic { get; set; }
 
         /// <summary>
         /// Constructor. The argument "data" includes run-time info, including ExecutionContext,
@@ -142,21 +137,15 @@ namespace MqttSteps
                 IPropertyReader prPort = _data.Properties.GetProperty("ServerPort");
                 ServerPort = int.Parse(prPort.GetStringValue(_data.ExecutionContext));
 
-                IPropertyReader prStatusTopic = _data.Properties.GetProperty("StatusTopic");
-                StatusTopic = prUrl.GetStringValue(_data.ExecutionContext);
-
             }
             catch (Exception ex)
             {
-
                 LogIt($"Err={ex.Message}");
             }
-
 
         }
 
         #region IElement Members
-
 
         /// <summary>
         /// Method called when the simulation run starts.
@@ -166,8 +155,6 @@ namespace MqttSteps
         {
             try
             {
-                ////var mqttEvent = _data.Events["MqttEvent"];
-
                 using (IMqttClient subscribeClient = new MqttFactory().CreateMqttClient())
                 {
                     var t = Task.Run(() => MqttHelpers.ConnectClient(subscribeClient, ServerUrl, ServerPort));
@@ -176,13 +163,9 @@ namespace MqttSteps
 
                     var info = _data.ExecutionContext.ExecutionInformation;
                     string payload = $"Project:{info.ProjectFolder} {info.ProjectName} Model={info.ModelName} Scenario={info.ScenarioName} Replication={info.ReplicationNumber}";
-
-                    // Subscribe a topic to indicate our presence
-                    MqttHelpers.MqttPublish(subscribeClient, StatusTopic, payload);
                 }
 
-                LogIt($"Info: Connecting to Server: Url={ServerUrl} Port={ServerPort} StatusTopic={StatusTopic}");
-
+                LogIt($"Info: Connecting to Server: Url={ServerUrl} Port={ServerPort}");
             }
             catch (Exception ex)
             {

@@ -23,6 +23,12 @@ namespace MqttSteps
         /// </summary>
         public static async void MqttPublish(IMqttClient publishClient, string topic, string payload)
         {
+            if (publishClient == null)
+                throw new ApplicationException("MqttPublish::PublishClient is null");
+
+            if (topic == null)
+                throw new ApplicationException("MqttPublish::Topic is null.");
+
             try
             {
                 var message = new MqttApplicationMessageBuilder()
@@ -37,7 +43,7 @@ namespace MqttSteps
             catch (Exception ex)
             {
                 string payload80 = payload.Length > 80 ? (payload.Substring(80) + "...") : payload;
-                throw new ApplicationException($"Publish. Topic={topic} Payload={payload80} Err-{ex}");
+                throw new ApplicationException($"MqttPublish:: Topic={topic} Payload={payload80} Err-{ex}");
             }
         }
 

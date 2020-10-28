@@ -79,11 +79,6 @@ namespace MqttSteps
             pd.Description = "Internet port number used by MQTT Server. Default is 1883";
             pd.Required = true;
 
-            pd = schema.PropertyDefinitions.AddStringProperty("StatusTopic", "MqttSample1/Status");
-            pd.DisplayName = "MQTT Status Topic";
-            pd.Description = "This is the topic published to for Status, such as Start";
-            pd.Required = true;
-
             // An optional Simio Event can be added to this Mqtt Connection element
             IEventDefinition ed;
             ed = schema.EventDefinitions.AddEvent("MqttEvent");
@@ -189,7 +184,7 @@ namespace MqttSteps
                 string payload = $"Project:{info.ProjectFolder} {info.ProjectName} Model={info.ModelName} Scenario={info.ScenarioName} Replication={info.ReplicationNumber}";
 
                 // Publish a topic to indicate our presence
-                MqttHelpers.MqttPublish(PublishClient, StatusTopic, payload);
+                //MqttHelpers.MqttPublish(PublishClient, StatusTopic, payload);
 
                 LogIt($"Info: Connecting to Server: Url={ServerUrl} Port={ServerPort} StatusTopic={StatusTopic}");
 

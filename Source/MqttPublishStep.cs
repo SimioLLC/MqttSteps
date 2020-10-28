@@ -50,23 +50,23 @@ namespace MqttSteps
         /// </summary>
         public void DefineSchema(IPropertyDefinitions schema)
         {
-            // Example of how to add a property definition to the step.
+            // property definition that will be added to the schema of this step
             IPropertyDefinition pd;
-
-            pd = schema.AddStringProperty("MqttTopic", "MqttSample/MyTopic");
-            pd.DisplayName = "The MQTT Topic";
-            pd.Description = "The MQTT topic. Often hierarchical using slashes. Example: PlantTopeka/Machine1/State/Speed";
-            pd.Required = true;
-
-            pd = schema.AddExpressionProperty("MqttPayload", "0.0");
-            pd.DisplayName = "Payload";
-            pd.Description = "The payload data to send with the Topic";
-            pd.Required = true;
 
             // Add the connector element property definition to the step.
             pd = schema.AddElementProperty("MqttServer", MqttPublishConnectorDefinition.MY_ID);
             pd.DisplayName = "MQTT Server";
             pd.Description = "The MQTT URL and port of the MQTT server(broker). For example, localhost:1883. Default port is 1883.";
+            pd.Required = true;
+
+            pd = schema.AddStringProperty("MqttTopic", "MqttSample/MyTopic");
+            pd.DisplayName = "The MQTT Topic";
+            pd.Description = "The MQTT topic. Case sensitive. By convention, hierarchical using slashes. Example: PlantTopeka/Machine1/State/Speed";
+            pd.Required = true;
+
+            pd = schema.AddExpressionProperty("MqttPayload", "0.0");
+            pd.DisplayName = "Payload";
+            pd.Description = "The payload data to send with the Topic";
             pd.Required = true;
 
         }
