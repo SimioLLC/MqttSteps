@@ -131,11 +131,6 @@ namespace MqttSteps
         public int ServerPort { get; set; }
 
         /// <summary>
-        /// A status topic that is published when the connector is created.
-        /// </summary>
-        string StatusTopic { get; set; }
-
-        /// <summary>
         /// Constructor. The argument "data" includes run-time info, including ExecutionContext,
         /// I.e. data has members of Events, that can be indexed with the name
         /// and also Properties and ExecutionContext.
@@ -183,10 +178,6 @@ namespace MqttSteps
                 var info = _data.ExecutionContext.ExecutionInformation;
                 string payload = $"Project:{info.ProjectFolder} {info.ProjectName} Model={info.ModelName} Scenario={info.ScenarioName} Replication={info.ReplicationNumber}";
 
-                // Publish a topic to indicate our presence
-                //MqttHelpers.MqttPublish(PublishClient, StatusTopic, payload);
-
-                LogIt($"Info: Connecting to Server: Url={ServerUrl} Port={ServerPort} StatusTopic={StatusTopic}");
 
             }
             catch (Exception ex)
