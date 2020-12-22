@@ -61,7 +61,11 @@ namespace MqttSteps
             {
                 subscriberClient.ApplicationMessageReceivedHandler = new MqttApplicationMessageReceivedHandlerDelegate(msg =>
                 {
-                    ProcessMessage(msg.ApplicationMessage.Topic, Encoding.UTF8.GetString(msg.ApplicationMessage.Payload));
+                    string payload = "";
+                    if (msg.ApplicationMessage.Payload != null)
+                        payload = Encoding.UTF8.GetString(msg.ApplicationMessage.Payload);
+
+                    ProcessMessage(msg.ApplicationMessage.Topic, payload );
                 });
 
                 await Task.Delay(20);

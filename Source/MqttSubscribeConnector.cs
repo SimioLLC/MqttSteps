@@ -118,6 +118,7 @@ namespace MqttSteps
 
         public int ServerPort { get; set; }
 
+        public IMqttClient SubscribeClient { get; set; }
 
         /// <summary>
         /// Constructor. The argument "data" includes run-time info, including ExecutionContext,
@@ -155,11 +156,11 @@ namespace MqttSteps
         {
             try
             {
-                using (IMqttClient subscribeClient = new MqttFactory().CreateMqttClient())
+                using (SubscribeClient = new MqttFactory().CreateMqttClient())
                 {
-                    var t = Task.Run(() => MqttHelpers.ConnectClient(subscribeClient, ServerUrl, ServerPort));
+                    var t = Task.Run(() => MqttHelpers.ConnectClient(SubscribeClient, ServerUrl, ServerPort));
                     //Todo: This will throw an error if there are no MQTT Servers.
-                    t.Wait();
+                    t.Wait(2000);
 
                     var info = _data.ExecutionContext.ExecutionInformation;
                     string payload = $"Project:{info.ProjectFolder} {info.ProjectName} Model={info.ModelName} Scenario={info.ScenarioName} Replication={info.ReplicationNumber}";
@@ -178,7 +179,20 @@ namespace MqttSteps
         /// </summary>
         public void Shutdown()
         {
-            LogIt("Shutdown");
+            try
+            {
+
+                var task = Task.Run(() => SubscribeClient.DisconnectAsync());
+                task.Wait(2000);
+
+                LogIt("Shutdown MQTT Subscribe Connector");
+
+            }
+            catch (Exception ex)
+            {
+                LogIt($"Shutdown MQTT Subscribe Error={ex}");
+            }
+
         }
 
         private void LogIt(string msg)

@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using MQTTnet;
 using MQTTnet.Client;
+using MQTTnet.Client.Disconnecting;
 using SimioAPI;
 using SimioAPI.Extensions;
 
@@ -147,8 +148,8 @@ namespace MqttSteps
                 IPropertyReader prPort = _data.Properties.GetProperty("ServerPort");
                 ServerPort = int.Parse(prPort.GetStringValue(_data.ExecutionContext));
 
-                IPropertyReader prStatusTopic = _data.Properties.GetProperty("StatusTopic");
-                StatusTopic = prUrl.GetStringValue(_data.ExecutionContext);
+                //IPropertyReader prStatusTopic = _data.Properties.GetProperty("StatusTopic");
+                //StatusTopic = prUrl.GetStringValue(_data.ExecutionContext);
 
             }
             catch (Exception ex)
@@ -182,7 +183,7 @@ namespace MqttSteps
             }
             catch (Exception ex)
             {
-                Alert($"Cannot Initalize. Err={ex.Message}");
+                Alert($"Cannot Initialize. Err={ex.Message}");
             }
         }
 
@@ -191,10 +192,18 @@ namespace MqttSteps
         /// </summary>
         public void Shutdown()
         {
-            var task = Task.Run(() => PublishClient.DisconnectAsync());
-            task.Wait();
+            try
+            {
 
-            LogIt("Shutdown");
+                var task = Task.Run(() => PublishClient.DisconnectAsync() );
+                task.Wait(2000);
+
+                LogIt("Shutdown MQTT Publish Connector");
+            }
+            catch (Exception ex)
+            {
+                LogIt($"Shutdown MQTT Publish Error={ex}");
+            }
 
         }
 
