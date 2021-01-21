@@ -170,6 +170,7 @@ namespace MqttSteps
 
         /// <summary>
         /// Method called when the simulation run is initialized.
+        /// (after Run is specified but before the simulation actually begins)
         /// </summary>
         public void Initialize()
         {

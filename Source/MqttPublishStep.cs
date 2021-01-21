@@ -107,10 +107,8 @@ namespace MqttSteps
             _props = properties;
 
             prServerElement = (IElementProperty)_props.GetProperty("MqttServer");
-
             prTopic = (IPropertyReader) _props.GetProperty("MqttTopic");
             prPayload = (IPropertyReader)_props.GetProperty("MqttPayload");
-            
         }
 
         #region IStep Members
@@ -127,8 +125,9 @@ namespace MqttSteps
             try
             {
                 // Example of how to get the value of a step property.
-                var epReader = (IExpressionPropertyReader) prPayload;
-                var payload = epReader.GetExpressionValue((IExecutionContext)context).ToString();
+                var eprPayload = (IExpressionPropertyReader) prPayload;
+                var payload = eprPayload.GetExpressionValue(context).ToString();
+
                 topic = prTopic.GetStringValue(context);
 
                 // Get the MQTT connector which holds the MQTT client information
@@ -148,7 +147,6 @@ namespace MqttSteps
                     Logit(context, $"Execute. Step Topic={topic} .Client not connected. Topic={topic} Payload={payload}.");
                     return ExitType.AlternateExit;
                 }
-
 
             }
             catch (Exception ex)
