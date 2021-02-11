@@ -85,13 +85,13 @@ namespace MqttSteps
     {
         IPropertyReaders _propReaders;
 
-        IPropertyReader prMessage;
+        IPropertyReader _prMessage;
 
         public AlertStep(IPropertyReaders properties)
         {
             _propReaders = properties;
 
-            prMessage = _propReaders.GetProperty("Message");
+            _prMessage = _propReaders.GetProperty("Message");
 
         }
 
@@ -103,7 +103,7 @@ namespace MqttSteps
         public ExitType Execute(IStepExecutionContext context)
         {
             // Example of how to get the value of a step property.
-            string message = prMessage.GetStringValue(context);
+            string message = _prMessage.GetStringValue(context);
 
             DialogResult result = AlertBox.ShowMessage(message);
 

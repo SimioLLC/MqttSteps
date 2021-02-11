@@ -94,6 +94,7 @@
     <Compile Include="FormMqttStatus.Designer.cs">
       <DependentUpon>FormMqttStatus.cs</DependentUpon>
     </Compile>
+    <Compile Include="LogHelpers.cs" />
     <Compile Include="MqttHelpers.cs" />
     <Compile Include="MqttSubscribeConnector.cs" />
     <Compile Include="MqttSubscriberElement.cs" />
