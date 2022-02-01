@@ -11,7 +11,7 @@ namespace MqttSteps
     //=========================================================================
     // Step Definition
 
-    public class MqttPublishExpressionStepDefinition : IStepDefinition
+    class MqttPublishExpressionStepDefinition : IStepDefinition
     {
         #region IStepDefinition Members
 
@@ -89,7 +89,7 @@ namespace MqttSteps
     /// <summary>
     /// The step instance
     /// </summary>
-    public class MqttPublishExpressionStep : IStep
+    class MqttPublishExpressionStep : IStep
     {
         readonly IPropertyReaders _props;
         readonly IElementProperty prServerElement;
@@ -125,6 +125,7 @@ namespace MqttSteps
             try
             {
                 // Example of how to get the value of a step property.
+                Logit(context, $"Getting value of Payload Property.");
                 var eprPayload = (IExpressionPropertyReader) prPayload;
                 var payload = eprPayload.GetExpressionValue(context).ToString();
 

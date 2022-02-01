@@ -24,7 +24,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <PlatformTarget>AnyCPU</PlatformTarget>
+    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -41,22 +41,11 @@
     <Reference Include="MQTTnet.Extensions.Rpc, Version=3.1.2.0, Culture=neutral, PublicKeyToken=b69712f52770c0a7, processorArchitecture=MSIL">
       <HintPath>..\packages\MQTTnet.Extensions.Rpc.3.1.2\lib\net461\MQTTnet.Extensions.Rpc.dll</HintPath>
     </Reference>
-    <Reference Include="QlmControls">
-      <HintPath>C:\Program Files\Simio LLC\Simio\QlmControls.dll</HintPath>
-    </Reference>
-    <Reference Include="QlmLicenseLib, Version=14.1.21085.3, Culture=neutral, PublicKeyToken=9c65e32c060523a1, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>C:\Program Files\Simio LLC\Simio\QlmLicenseLib.dll</HintPath>
-    </Reference>
     <Reference Include="SimioAPI">
       <HintPath>C:\Program Files\Simio LLC\Simio\SimioAPI.dll</HintPath>
     </Reference>
     <Reference Include="SimioAPI.Extensions">
       <HintPath>C:\Program Files\Simio LLC\Simio\SimioAPI.Extensions.dll</HintPath>
-    </Reference>
-    <Reference Include="SimioAPI.Graphics, Version=14.231.25239.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>C:\Program Files\Simio LLC\Simio\SimioAPI.Graphics.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />

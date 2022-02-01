@@ -1,7 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using MQTTnet;
 using MQTTnet.Client;
+using MQTTnet.Client.Disconnecting;
 using SimioAPI;
 using SimioAPI.Extensions;
 
@@ -18,7 +22,7 @@ namespace MqttSteps
     /// <summary>
     /// The element defines the url of the MQTT Server (broker) and the port.
     /// </summary>
-    public class MqttPublishConnectorDefinition : IElementDefinition
+    internal class MqttPublishConnectorDefinition : IElementDefinition
     {
         #region IElementDefinition Members
 
@@ -114,7 +118,7 @@ namespace MqttSteps
     /// <summary>
     /// Defines what happens when the runtime starts
     /// </summary>
-    public class MqttPublishConnector : IElement
+    class MqttPublishConnector : IElement
     {
         readonly IElementData _data;
 
