@@ -21,7 +21,7 @@ namespace MqttSteps
     /// <summary>
     /// The element defines the url of the MQTT Server (broker) and the port.
     /// </summary>
-    internal class MqttSubscribeConnectorDefinition : IElementDefinition
+    public class MqttSubscribeConnectorDefinition : IElementDefinition
     {
         #region IElementDefinition Members
 
@@ -107,7 +107,7 @@ namespace MqttSteps
     /// <summary>
     /// Defines what happens when the runtime starts
     /// </summary>
-    class MqttSubscribeConnector : IElement
+    public class MqttSubscribeConnector : IElement
     {
         readonly IElementData _data;
 
@@ -170,7 +170,7 @@ namespace MqttSteps
             }
             catch (Exception ex)
             {
-                Alert($"MQTT Subscribe. Cannot Initalize. Err={ex.Message}");
+                Alert($"MQTT Subscribe. Cannot Initialize (is the MQTT Broker running?) Err={ex.Message}");
             }
         }
 

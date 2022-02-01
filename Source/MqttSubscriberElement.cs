@@ -11,7 +11,7 @@ using SimioAPI.Extensions;
 
 namespace MqttSteps
 {
-    class MqttSubscriberElementDefinition : IElementDefinition
+    public class MqttSubscriberElementDefinition : IElementDefinition
     {
         #region IElementDefinition Members
 
@@ -113,7 +113,7 @@ namespace MqttSteps
     /// This Element subscribes to a MQTT topic.
     /// When the topic is received, it fires an event.
     /// </summary>
-    class MqttSubscriberElement : IElement
+    public class MqttSubscriberElement : IElement
     {
         IElementData _data;
 
@@ -225,7 +225,7 @@ namespace MqttSteps
             string[] tokens = payload.Trim().Split(':');
             if (tokens.Length != 2)
             {
-                LogIt($"Payload should be 2 colon-delimited tokens. Found={payload}");
+                LogIt($"Payload should be 2 colon-delimited tokens (e.g. SIMIOEVENT=1:PAYLOAD=myPayload). Found={payload}");
                 return;
             }
 
@@ -235,7 +235,7 @@ namespace MqttSteps
                 string[] eventsTokens = tokens[0].ToLower().Split('=');
                 if ( eventsTokens.Length != 2 || eventsTokens[0] != "simioevent"  )
                 {
-                    LogIt($"Event Token should be of the form SimioEvent=myEventNumber. Found={tokens[0]}");
+                    LogIt($"Event Token should be of the form SimioEvent=myEventNumber (e.g. SimioEvent=1). Found={tokens[0]}");
                     return;
                 }
 

@@ -1,4 +1,0 @@
-Time(Hours),EntityID,ObjectName,ProcessID,StepName,Action
-1.29158333333228,--,--,--,--,MqttPublishConnector::Shutdown
-1.29158333333228,--,--,--,--,MqttSubscribeConnector::Shutdown
-

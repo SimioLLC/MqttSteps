@@ -11,7 +11,7 @@ namespace MqttSteps
     //=========================================================================
     // Step Definition
 
-    class MqttPublishExpressionStepDefinition : IStepDefinition
+    public class MqttPublishExpressionStepDefinition : IStepDefinition
     {
         #region IStepDefinition Members
 
@@ -89,7 +89,7 @@ namespace MqttSteps
     /// <summary>
     /// The step instance
     /// </summary>
-    class MqttPublishExpressionStep : IStep
+    public class MqttPublishExpressionStep : IStep
     {
         readonly IPropertyReaders _props;
         readonly IElementProperty prServerElement;
