@@ -38,6 +38,9 @@
     <Reference Include="MQTTnet, Version=3.1.2.0, Culture=neutral, PublicKeyToken=b69712f52770c0a7, processorArchitecture=MSIL">
       <HintPath>..\packages\MQTTnet.3.1.2\lib\net461\MQTTnet.dll</HintPath>
     </Reference>
+    <Reference Include="MQTTnet.Extensions.ManagedClient, Version=3.1.2.0, Culture=neutral, PublicKeyToken=b69712f52770c0a7, processorArchitecture=MSIL">
+      <HintPath>..\packages\MQTTnet.Extensions.ManagedClient.3.1.2\lib\net461\MQTTnet.Extensions.ManagedClient.dll</HintPath>
+    </Reference>
     <Reference Include="MQTTnet.Extensions.Rpc, Version=3.1.2.0, Culture=neutral, PublicKeyToken=b69712f52770c0a7, processorArchitecture=MSIL">
       <HintPath>..\packages\MQTTnet.Extensions.Rpc.3.1.2\lib\net461\MQTTnet.Extensions.Rpc.dll</HintPath>
     </Reference>

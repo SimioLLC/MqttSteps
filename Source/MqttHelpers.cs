@@ -103,7 +103,7 @@ namespace MqttSteps
         }
 
         /// <summary>
-        /// Establish a connection with a TCP client at the given address and port.
+        /// Establish a connection with a TCP client to the given broker address and port.
         /// This connection is made with *no* KeepAlive timeout.
         /// There is a short delay (100 ms) after the connection.
         /// </summary>

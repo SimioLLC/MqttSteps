@@ -194,7 +194,7 @@ namespace MqttSteps
             }
             catch (Exception ex)
             {
-                Alert($"Initialize. Subscribing to MQTT:{ex.Message}");
+                Alert($"Initialize. Subscribing to MQTT:Server={MqttConnector.ServerUrl} Port={MqttConnector.ServerPort} Err={ex.Message}");
             }
 
         }

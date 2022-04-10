@@ -1,4 +1,4 @@
 Time(Hours),EntityID,ObjectName,ProcessID,StepName,Action
-1.61091666666515,--,--,--,--,MqttPublishConnector::Shutdown MQTT Publish Connector
-1.61091666666515,--,--,--,--,MqttSubscribeConnector::Shutdown MQTT Subscribe Error=System.AggregateException: One or more errors occurred. ---> System.ObjectDisposedException: Cannot access a disposed object.
+24,--,--,--,--,MqttPublishConnector::Shutdown MQTT Publish Connector
+24,--,--,--,--,MqttSubscribeConnector::Shutdown MQTT Subscribe Error=System.AggregateException: One or more errors occurred. ---> System.ObjectDisposedException: Cannot access a disposed object.
 
