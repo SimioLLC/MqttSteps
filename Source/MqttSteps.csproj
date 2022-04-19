@@ -145,8 +145,13 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy "$(TargetDir)*.*" "%25UserProfile%25\documents\SimioUserExtensions"
-copy "$(TargetDir)*.*" "$(SolutionDir)\Executables"</PostBuildEvent>
+    <PostBuildEvent>copy "$(TargetDir)mqttsteps.dll" "%25UserProfile%25\documents\SimioUserExtensions"
+copy "$(TargetDir)mqttNet.dll"  "%25UserProfile%25\documents\SimioUserExtensions"
+copy "$(TargetDir)mqttNet.Extensions.ManagedClient.dll"  "%25UserProfile%25\documents\SimioUserExtensions"
+copy "$(TargetDir)mqttNet.Extensions.RPC.dll"  "%25UserProfile%25\documents\SimioUserExtensions"
+
+
+</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
     <PreBuildEvent>
