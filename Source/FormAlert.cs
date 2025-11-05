@@ -24,6 +24,8 @@ namespace MqttSteps
             int nHeightEllipse
         );
 
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string Message { set { textMessage.Text = value; } }
 
         public FormAlert()

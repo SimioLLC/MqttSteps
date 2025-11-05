@@ -1,8 +1,5 @@
 ﻿using MQTTnet;
 using MQTTnet.Client;
-using MQTTnet.Client.Options;
-using MQTTnet.Client.Receiving;
-using MQTTnet.Client.Subscribing;
 using MQTTnet.Extensions.Rpc;
 using SimioAPI;
 using System;
@@ -36,7 +33,7 @@ namespace MqttSteps
                 .WithPayload(payload)
                 .Build();
 
-                CancellationToken cancellationToken;
+                CancellationToken cancellationToken = CancellationToken.None;
                 await publishClient.PublishAsync(message, cancellationToken);
 
             }
@@ -52,26 +49,49 @@ namespace MqttSteps
         /// </summary>
         /// <param name="subscriberClient"></param>
         /// <param name="ProcessMessage">Action delegate to return Topic and Payload received</param>
-        public static async void MqttSubscribeSetHandler(IMqttClient subscriberClient, Action<string, string> ProcessMessage)
+        public static void MqttSubscribeSetHandler(IMqttClient subscriberClient, Action<string, string> ProcessMessage)
         {
             if (subscriberClient == null)
                 throw new ApplicationException($"Null Subscriber Client");
 
             try
             {
-                subscriberClient.ApplicationMessageReceivedHandler = new MqttApplicationMessageReceivedHandlerDelegate(msg =>
+                // Use the += operator to subscribe to the event
+                subscriberClient.ApplicationMessageReceivedAsync += msg =>
                 {
-                    string payload = "";
-                    if (msg.ApplicationMessage.Payload != null)
-                        payload = Encoding.UTF8.GetString(msg.ApplicationMessage.Payload);
+                    // CRITICAL: Add a try...catch INSIDE the handler
+                    try
+                    {
+                        string payload = "";
+                        // The payload is now a "PayloadSegment" for performance.
+                        // Check its Count property instead of checking for null.
+                        if (msg.ApplicationMessage.PayloadSegment.Count > 0)
+                        {
+                            payload = Encoding.UTF8.GetString(msg.ApplicationMessage.PayloadSegment);
+                        }
 
-                    ProcessMessage(msg.ApplicationMessage.Topic, payload );
-                });
+                        ProcessMessage(msg.ApplicationMessage.Topic, payload);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Properly report the error. This is vital for debugging.
+                        // You might want to log this to a file or the Simio trace.
+                        // Re-throwing here is an option if you have a global handler.
+                        Console.WriteLine($"Error processing MQTT message: {ex}");
+                    }
 
-                await Task.Delay(20);
+                    // Because the new handler is async, you must return a Task.
+                    return Task.CompletedTask;
+                };
+
+                // This Task.Delay(20) is likely unnecessary and can be removed.
+                // The event subscription (+=) is synchronous.
+                // await Task.Delay(20); 
             }
             catch (Exception ex)
             {
+                // This only catches errors while *assigning* the handler,
+                // not errors *inside* the handler.
                 throw new ApplicationException($"Initializing Subscriber. Err={ex}");
             }
         }
@@ -120,7 +140,7 @@ namespace MqttSteps
                     .WithNoKeepAlive()
                     .Build();
 
-                CancellationToken cancellationToken;
+                CancellationToken cancellationToken = CancellationToken.None;
                 await client.ConnectAsync(connectOptions, cancellationToken);
 
                 await Task.Delay(100);
